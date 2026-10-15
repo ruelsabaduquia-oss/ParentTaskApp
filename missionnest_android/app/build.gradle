@@ -1,0 +1,18 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "com.missionnest.family"
+    compileSdk 35
+    buildFeatures { buildConfig true }
+
+    defaultConfig {
+        applicationId "com.missionnest.family"
+        minSdk 26
+        targetSdk 35
+        versionCode 2
+        versionName "1.1"
+        buildConfigField "String", "APP_START_PAGE", '"index.html"'
+    }
+}

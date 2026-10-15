@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#e90712"/>
+  <circle cx="256" cy="210" r="188" fill="#fff6f4"/>
+  <path d="M326 97a143 143 0 1 0 2 226" fill="none" stroke="#e90712" stroke-width="48" stroke-linecap="round"/>
+  <path d="M326 142a98 98 0 1 0 2 136" fill="none" stroke="#e90712" stroke-width="34" stroke-linecap="round"/>
+  <path d="M303 185a52 52 0 1 0 6 66" fill="none" stroke="#e90712" stroke-width="28" stroke-linecap="round"/>
+  <text x="300" y="240" fill="#e90712" font-family="Arial, sans-serif" font-size="66" font-weight="700">24/7</text>
+  <text x="256" y="455" fill="#ffffff" font-family="Arial Black, Arial, sans-serif" font-size="84" text-anchor="middle" font-weight="900">cham's</text>
+</svg>

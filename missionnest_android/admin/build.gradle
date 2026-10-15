@@ -1,0 +1,21 @@
+plugins { id "com.android.application" }
+android {
+    namespace "com.missionnest.family"
+    compileSdk 35
+    buildFeatures { buildConfig true }
+    defaultConfig {
+        applicationId "com.missionnest.admin"
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+        buildConfigField "String", "APP_START_PAGE", '"admin.html"'
+    }
+    sourceSets {
+        main {
+            java.srcDirs = ["../app/src/main/java"]
+            res.srcDirs = ["../app/src/main/res"]
+            assets.srcDirs = ["../app/src/main/assets"]
+        }
+    }
+}

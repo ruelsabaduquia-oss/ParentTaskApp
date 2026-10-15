@@ -1,0 +1,27 @@
+.admin-shell { max-width:1200px; margin:auto; padding:24px; }
+.admin-login { max-width:420px; margin:64px auto; padding:24px; background:white; border:1px solid #dce9ff; border-radius:8px; }
+.admin-shell h1 { font-size:26px; }
+.admin-shell h2 { font-size:19px; }
+.admin-toolbar { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:16px; margin:20px 0; }
+.admin-toolbar .field { flex:1; max-width:340px; margin:0; }
+.admin-overview { display:flex; flex-wrap:wrap; gap:32px; padding:20px 0; border-bottom:1px solid #dce9ff; }
+.admin-overview strong { display:block; font-size:28px; }
+.admin-table-wrap { overflow:auto; background:white; border:1px solid #dce9ff; border-radius:8px; }
+.admin-table { width:100%; border-collapse:collapse; min-width:660px; }
+.admin-table th,.admin-table td { text-align:left; padding:14px; border-bottom:1px solid #e1e8f5; }
+.admin-table th { background:#eff4ff; font-size:13px; }
+.admin-table td small { display:block; color:var(--muted); overflow-wrap:anywhere; }
+.admin-shell .btn,.admin-login .btn,.admin-dialog .btn { border-radius:8px; }
+.admin-shell .pill { font-size:12px; }
+.admin-status-pending { background:#ffedca; color:#684000; }
+.admin-status-active { background:#c9f7df; color:#005b3f; }
+.admin-status-suspended { background:#ffd9d9; color:#7b0000; }
+.admin-dialog { width:min(760px,calc(100% - 24px)); max-height:92vh; overflow:auto; border:1px solid #dce9ff; border-radius:8px; padding:24px; color:var(--text); }
+.admin-dialog::backdrop { background:rgba(13,28,46,.45); }
+.admin-dialog form { padding:18px 0; border-top:1px solid #dce9ff; }
+.admin-dialog input,.admin-dialog select,.admin-dialog textarea,.admin-login input { border-radius:6px; }
+.admin-dialog h2 { font-size:22px; overflow-wrap:anywhere; }
+.admin-dialog h3 { font-size:17px; }
+.admin-feedback:not(:empty) { background:#fff0d3; border:1px solid #e6c881; border-radius:6px; padding:12px; margin:12px 0; overflow-wrap:anywhere; }
+.admin-event { padding:12px 0; border-bottom:1px solid #dce9ff; overflow-wrap:anywhere; }
+@media(max-width:600px) { .admin-shell { padding:16px; } .admin-dialog { padding:16px; } .admin-overview { gap:24px; } }

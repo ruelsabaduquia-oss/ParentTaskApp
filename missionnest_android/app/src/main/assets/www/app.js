@@ -6,6 +6,7 @@ const app = document.getElementById("app");
 
 let state = {
   session: loadSession(),
+  authSignupOpen: false,
   view: "home",
   family: null,
   subscription: null,
@@ -183,7 +184,7 @@ function renderAuth() {
     <header class="topbar"><div class="topbar-inner">${brand()}<span class="pill">Cloud Mode</span></div></header>
     <main class="shell grid grid-2">
       <section class="card hero">
-        <span class="chip active">MissionNest</span>
+        <span class="chip active">MyKidsTask</span>
         <h1 style="margin-top:12px;">Family missions, wherever you are</h1>
         <p class="muted">This APK talks directly to Supabase. No Django server, no local IP, no same-Wi-Fi requirement.</p>
         ${messageHtml()}
@@ -195,13 +196,15 @@ function renderAuth() {
           ${field("Password", "password", "password", "Password")}
           <button class="btn btn-primary btn-wide" type="submit">Open Parent Dashboard</button>
         </form>
-        <hr>
+        <p class="auth-signup-prompt">New parent? <button class="auth-signup-link" id="toggleSignup" type="button" aria-expanded="${state.authSignupOpen}" aria-controls="parentSignupPanel">${state.authSignupOpen ? 'Close sign up' : 'Sign up'}</button></p>
+        <section id="parentSignupPanel" ${state.authSignupOpen ? '' : 'hidden'}>
         <h2>Parent Sign Up</h2>
         <form id="setupForm">
           ${field("Email", "signup_email", "email", "parent@example.com")}
           ${field("Password", "signup_password", "password", "Minimum 6 characters")}
           <button class="btn btn-amber btn-wide" type="submit">Create Parent Account</button>
         </form>
+        </section>
         <hr>
         <h2>Kid Tablet Login</h2>
         <form id="kidLoginForm">
@@ -215,6 +218,13 @@ function renderAuth() {
   byId("setupForm").addEventListener("submit", setupFamily);
   byId("parentLoginForm").addEventListener("submit", parentLogin);
   byId("kidLoginForm").addEventListener("submit", kidLogin);
+  byId("toggleSignup").addEventListener("click", event => {
+    state.authSignupOpen = !state.authSignupOpen;
+    byId("parentSignupPanel").hidden = !state.authSignupOpen;
+    event.currentTarget.setAttribute("aria-expanded", String(state.authSignupOpen));
+    event.currentTarget.textContent = state.authSignupOpen ? "Close sign up" : "Sign up";
+    if (state.authSignupOpen) byId("setupForm").querySelector("input").focus();
+  });
 }
 
 function renderParentShell() {
@@ -227,6 +237,7 @@ function renderParentShell() {
     kids: kidsManager,
     family: familyManager,
     subscription: subscriptionPage,
+    stars: () => window.StarStats?.render() || '',
   };
   if (isTutor() && state.view === "kids") state.view = "home";
   app.className = "app";
@@ -243,9 +254,11 @@ function renderParentShell() {
   document.querySelectorAll("[data-tab]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.tab)));
   bindParentHandlers();
   bindSubscriptionHandlers();
+  window.StarStats?.bind();
   if (state.view === "quiz") {
     if (quizDraft) byId("quizForm").replaceWith(quizDraft);
     state.quizDraftForm = byId("quizForm");
+    window.MissionMath?.bind(state.quizDraftForm);
   }
 }
 
@@ -550,6 +563,7 @@ function parentHome() {
     <section class="section-title">
       <h2>Kids Monitor</h2>
       <div class="action-row">
+        ${isTutor() ? '' : '<button class="btn" data-go="stars">Star Stats</button>'}
         <button class="btn btn-primary" data-go="mission">${isTutor() ? "New Lesson" : "New Mission"}</button>
         <button class="btn btn-amber" data-go="quiz">Create Quiz</button>
       </div>
@@ -631,6 +645,7 @@ function quizForm() {
           <option value="flash_card">Flash cards</option>
         </select>
       </div>
+      ${window.MissionMath?.editorHtml() || ""}
       <div id="multipleChoiceSource">
         <fieldset class="quiz-source-options"><legend>Question source</legend>
           <label><input type="radio" name="mc_source" value="paste" checked> Paste questions</label>
@@ -861,6 +876,7 @@ async function setupFamily(event) {
     const refreshToken = auth.session?.refresh_token || auth.refresh_token;
     const user = auth.user;
     if (!token || !user) {
+      state.authSignupOpen = false;
       showNotice("Account created. Please confirm your email, then login to create your family dashboard.");
       return;
     }
@@ -1294,14 +1310,12 @@ async function saveParentComments(event) {
 }
 
 async function approveAssignment(assignmentId) {
-  await supabasePatch("mn_assignments", assignmentId, { status: "approved", approved_at: new Date().toISOString() });
-  const assignment = state.assignments.find((item) => item.id === assignmentId);
-  const child = state.children.find((item) => item.id === assignment.child_id);
-  const mission = missionById(assignment.mission_id);
-  if (child && mission) {
-    await supabasePatch("mn_children", child.id, { stars: Number(child.stars || 0) + Number(mission.reward_stars || 0) });
+  try {
+    await supabaseRequest('/rest/v1/rpc/mn_approve_assignment', { method:'POST', body:JSON.stringify({p_assignment_id:assignmentId}) });
+    await refreshData();
+  } catch (error) {
+    showError(/PGRST202/.test(error.message) ? 'Please apply the star-history database update before approving rewards.' : error.message);
   }
-  await refreshData();
 }
 
 async function declineAssignment(assignmentId) {
@@ -1456,7 +1470,7 @@ function renderQuiz() {
           </div>
         </div>
       </section>
-      ${type === "flash_card" ? "" : `<section class="card" style="margin-top:12px;"><h1>${escapeHtml(question.prompt)}</h1></section>`}
+      ${type === "flash_card" ? "" : `<section class="card" style="margin-top:12px;"><h1>${quizRichText(question.prompt)}</h1></section>`}
       ${quizAnswerInput(question, type, savedAnswer, feedback)}
     </main>`;
   document.querySelectorAll("[data-answer]").forEach((button) => button.addEventListener("click", () => {
@@ -1483,7 +1497,7 @@ function renderQuiz() {
 function fillBlankQuestionsHtml(questions, preview = false) {
   return questions.map((question, index) => `
     <div class="fill-quiz-row">
-      <label for="fillAnswer${index}">${index + 1}. ${escapeHtml(question.prompt)}</label>
+      <label for="fillAnswer${index}"><span class="quiz-question-number">${index + 1}.</span> ${quizRichText(question.prompt)}</label>
       <input id="fillAnswer${index}" data-fill-answer="${escapeAttr(question.id || index)}" type="text"
         aria-label="Answer to question ${index + 1}" autocomplete="off" required
         value="${escapeAttr(preview ? "" : state.quizAnswers[question.id] || "")}" ${preview ? "disabled" : ""}>
@@ -1522,7 +1536,7 @@ function quizAnswerInput(question, type, savedAnswer, feedback) {
   if (type === "multiple_choice") {
     return `
       <section class="grid" style="margin-top:12px;">
-        ${(question.choices || []).map((choice) => `<button class="answer ${savedAnswer === choice.label ? "selected" : ""}" data-answer="${escapeAttr(choice.label)}">${escapeHtml(choice.label)}. ${escapeHtml(choice.text)}</button>`).join("")}
+        ${(question.choices || []).map((choice) => `<button class="answer ${savedAnswer === choice.label ? "selected" : ""}" data-answer="${escapeAttr(choice.label)}">${escapeHtml(choice.label)}. ${quizRichText(choice.text)}</button>`).join("")}
       </section>
       ${multipleChoiceNavigation(state.quizStep, state.selectedQuiz.questions.length)}`;
   }
@@ -1530,7 +1544,7 @@ function quizAnswerInput(question, type, savedAnswer, feedback) {
     return `
       <section class="card flash-card" style="margin-top:12px;">
         <p class="tiny">Flash Card</p>
-        <h2>${escapeHtml(question.prompt)}</h2>
+        <h2>${quizRichText(question.prompt)}</h2>
       </section>
       <section class="card" style="margin-top:12px;">
         <div class="field">
@@ -1578,8 +1592,8 @@ function flashFeedbackHtml(question, feedback) {
   return `
     <div class="${feedback.correct ? "success" : "error"}" role="status" style="padding:12px;margin:12px 0;">
       <h2>${feedback.correct ? "Correct!" : "Incorrect"}</h2>
-      <p class="muted">Your answer: ${escapeHtml(state.quizAnswers[question.id] || "-")}</p>
-      ${feedback.showAnswer ? `<p><strong>Correct answer:</strong> ${escapeHtml(question.answer)}</p>` : ""}
+      <p class="muted">Your answer: ${quizRichText(state.quizAnswers[question.id] || "-")}</p>
+      ${feedback.showAnswer ? `<p><strong>Correct answer:</strong> ${quizRichText(question.answer)}</p>` : ""}
     </div>`;
 }
 
@@ -1605,7 +1619,7 @@ function renderQuizPreview() {
           </div>
         </div>
       </section>
-      ${type === "flash_card" || type === "fill_blank" ? "" : `<section class="card" style="margin-top:12px;"><p class="tiny">Question 1 of ${preview.questions.length}</p><h1>${escapeHtml(question.prompt)}</h1></section>`}
+      ${type === "flash_card" || type === "fill_blank" ? "" : `<section class="card" style="margin-top:12px;"><p class="tiny">Question 1 of ${preview.questions.length}</p><h1>${quizRichText(question.prompt)}</h1></section>`}
       ${type === "fill_blank" ? `${fillBlankQuestionsHtml(preview.questions, true)}<button class="btn btn-primary btn-wide" type="button" disabled>Submit Quiz</button>` : previewQuizAnswerHtml(question, type)}
     </main>`;
   byId("backToQuizBtn").addEventListener("click", () => {
@@ -1619,7 +1633,7 @@ function previewQuizAnswerHtml(question, type) {
   if (type === "multiple_choice") {
     return `
       <section class="grid" style="margin-top:12px;">
-        ${(question.choices || []).map((choice) => `<button class="answer" type="button">${escapeHtml(choice.label)}. ${escapeHtml(choice.text)}</button>`).join("")}
+        ${(question.choices || []).map((choice) => `<button class="answer" type="button">${escapeHtml(choice.label)}. ${quizRichText(choice.text)}</button>`).join("")}
       </section>
       ${multipleChoiceNavigation(0, state.previewQuiz.questions.length, true)}`;
   }
@@ -1627,7 +1641,7 @@ function previewQuizAnswerHtml(question, type) {
     return `
       <section class="card flash-card" style="margin-top:12px;">
         <p class="tiny">Flash Card</p>
-        <h2>${escapeHtml(question.prompt)}</h2>
+        <h2>${quizRichText(question.prompt)}</h2>
       </section>
       <section class="card" style="margin-top:12px;">
         <div class="field"><label>Child answer</label><input type="text" disabled placeholder="Child types here"></div>
@@ -1807,7 +1821,7 @@ function quizReviewHtml(result) {
         return `
           <article class="card ${isCorrect ? "success" : "notice"}">
             <p class="tiny">Question ${index + 1} · ${isCorrect ? "Correct" : "Review"}</p>
-            <h3>${escapeHtml(question.prompt)}</h3>
+            <h3>${quizRichText(question.prompt)}</h3>
             <p><strong>Your answer:</strong> ${answerDisplay(question, selected)}</p>
             <p><strong>Correct answer:</strong> ${answerDisplay(question, question.answer)}</p>
             ${questionExplanationHtml(question)}
@@ -2296,7 +2310,7 @@ function parentQuestionReviewCard(question, answer, index) {
         <p class="tiny">Question ${index + 1}</p>
         <span class="chip">${answer ? (isCorrect ? "Correct" : "Wrong") : "Not answered"}</span>
       </div>
-      <h3>${escapeHtml(question.prompt)}</h3>
+      <h3>${quizRichText(question.prompt)}</h3>
       <p><strong>Child answer:</strong> ${answerDisplay(question, selected)}</p>
       <p><strong>Answer key:</strong> ${answerDisplay(question, question.answer)}</p>
       ${questionExplanationHtml(question)}
@@ -2373,6 +2387,7 @@ function childCard(child) {
         <small class="muted">Tap to update or delete</small>
       </summary>
       <div class="kid-detail-panel">
+        ${window.StarStats?.profileButtons(child) || ''}
         <div class="grid grid-2">
           <div class="card" style="background:var(--surface-low);">
             <p class="tiny">Kid Login</p>
@@ -2474,7 +2489,8 @@ function categoryOption(category) {
 }
 
 function parseQuiz(text) {
-  const normalized = text
+  const protectedSource = protectQuizMath(text);
+  const normalized = protectedSource.text
     .replace(/\r/g, "")
     .replace(/\*\*/g, "")
     .replace(/\\_/g, "_")
@@ -2514,7 +2530,10 @@ function parseQuiz(text) {
       questions.push({ sort_order: questions.length + 1, prompt, choices, answer: answer.toUpperCase(), explanation: "multiple_choice" });
     }
   }
-  return questions;
+  return questions.map(question => ({ ...question,
+    prompt: protectedSource.restore(question.prompt),
+    choices: question.choices.map(choice => ({...choice, text:protectedSource.restore(choice.text)})),
+  }));
 }
 
 function parseManualQuiz(form, quizType) {
@@ -2609,11 +2628,26 @@ function parseCsvRows(text) {
 }
 
 function cleanQuizText(value) {
-  return String(value || "")
+  const math = protectQuizMath(value);
+  return math.restore(math.text
     .replace(/^#+\s*/g, "")
-    .replace(/\*/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/(^|\s)\*(\S(?:[^*]*?\S)?)\*(?=\s|[.,!?;:]|$)/g, "$1$2")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim());
+}
+
+function protectQuizMath(value) {
+  const formulas = [];
+  const prefix = `MNFORMULA${Math.random().toString(36).slice(2)}X`;
+  const text = String(value || "").replace(/\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\]|\$\$[\s\S]*?\$\$/g, formula => {
+    formulas.push(formula); return `${prefix}${formulas.length - 1}END`;
+  });
+  return { text, restore: text => String(text).replace(new RegExp(`${prefix}(\\d+)END`, 'g'), (_, index) => formulas[Number(index)]) };
+}
+
+function quizRichText(value) {
+  return window.MissionMath ? window.MissionMath.render(value) : escapeHtml(value);
 }
 
 function quizQuestionType(question) {
@@ -2625,10 +2659,17 @@ function quizQuestionType(question) {
 function questionExplanationHtml(question) {
   const explanation = String(question.explanation || "").trim();
   if (!explanation || ["multiple_choice", "fill_blank", "flash_card"].includes(explanation)) return "";
-  return `<p><strong>Explanation:</strong> ${escapeHtml(explanation)}</p>`;
+  return `<p><strong>Explanation:</strong> ${quizRichText(explanation)}</p>`;
 }
 
 function answersMatch(given, expected) {
+  // Explicit formula keys preserve symbol/element case; ordinary text stays forgiving.
+  if (/^\s*(?:\\\(|\\\[|\$\$)/.test(String(expected))) {
+    const formula = value => String(value || '').trim()
+      .replace(/^\\\(([\s\S]*)\\\)$/, '$1').replace(/^\\\[([\s\S]*)\\\]$/, '$1').replace(/^\$\$([\s\S]*)\$\$$/, '$1')
+      .trim().replace(/^\\ce\{([\s\S]*)\}$/, '$1').replace(/\s+/g, ' ').trim();
+    return formula(given) === formula(expected);
+  }
   return normalizeAnswer(given) === normalizeAnswer(expected);
 }
 
@@ -2643,8 +2684,8 @@ function normalizeAnswer(value) {
 function answerDisplay(question, answer) {
   if (!answer) return "-";
   const choice = (question.choices || []).find((item) => item.label === answer);
-  if (choice) return `${escapeHtml(answer)}. ${escapeHtml(choice.text)}`;
-  return escapeHtml(answer);
+  if (choice) return `${escapeHtml(answer)}. ${quizRichText(choice.text)}`;
+  return quizRichText(answer);
 }
 
 async function supabaseGet(table, query = "") {
@@ -2773,6 +2814,7 @@ function loadSession() {
 
 function clearSession() {
   clearInterval(quizClockInterval);
+  state.authSignupOpen = false;
   state.subscription = null;
   ["subscriptionReminder", "billingNotification"].forEach(id => byId(id)?.remove());
   byId("familyInviteDialog")?.remove();
@@ -2801,7 +2843,7 @@ function messageHtml() {
 }
 
 function brand() {
-  return `<div class="brand"><span class="brand-mark">↗</span><span>MissionNest</span></div>`;
+  return `<div class="brand"><img class="brand-icon" src="app-icon.png" alt=""><span>MyKidsTask</span></div>`;
 }
 
 function tab(name, label) {

@@ -45,6 +45,13 @@ Admin app: http://127.0.0.1:8088/admin.html
 Edit the UI directly in `missionnest_android/app/src/main/assets/www`. There is
 no asset synchronization step from the inventory project.
 
+## Math and Science
+
+The quiz builder includes an equation editor and local KaTeX/mhchem rendering for
+summation, algebra, calculus, physics, units, and chemical formulas/reactions.
+See [notation examples and grading rules](docs/math-science.md). No schema change
+is needed. The renderer is not a symbolic equation solver.
+
 ## Tests
 
 Install Playwright and PGlite in an external dependency directory, then expose
@@ -55,6 +62,8 @@ node missionnest_android/tests/subscriptions.cjs
 node missionnest_android/tests/subscription-ui.cjs
 node missionnest_android/tests/family-access.cjs
 node missionnest_android/tests/family-flow.cjs
+node missionnest_android/tests/math-science.cjs
+node missionnest_android/tests/stars.cjs
 ```
 
 Browser tests currently launch installed Microsoft Edge. `quiz-flow.cjs` also
@@ -67,6 +76,10 @@ The legacy child name/PIN authentication and anonymous data policies need
 hardening before public distribution. Subscription notifications are in-app
 while connected, not closed-app push notifications. GCash payments require
 manual verification by the administrator.
+
+Star graphs/reset require `supabase/star_history.sql` after the subscription
+migration. Existing balances are preserved; reset clears the balance, not the
+earning history. See the Android README for historical-data limitations.
 
 The Supabase publishable key is client configuration, not an administrator
 credential. Never commit a service-role key, account password, or signing key.

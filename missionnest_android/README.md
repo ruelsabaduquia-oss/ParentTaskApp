@@ -6,9 +6,35 @@ The app talks directly to Supabase using the public anon key in `app/src/main/as
 
 For a new database, run `supabase/missionnest_mobile.sql`, then
 `supabase/family_invitations.sql`, `supabase/direct_invitations_and_tutors.sql`, then
-`supabase/tutor_work_ownership.sql`, then `supabase/subscriptions.sql` in the Supabase SQL Editor before installing.
-For an existing database with tutor ownership already installed, run only `subscriptions.sql`.
+`supabase/tutor_work_ownership.sql`, `supabase/subscriptions.sql`, then
+`supabase/star_history.sql` in the Supabase SQL Editor before installing.
+For an existing database with subscriptions already installed, run only `star_history.sql`.
 Reapply migrations in that order if an earlier schema script is rerun.
+
+## Stars and Earning History
+
+Parents/guardians can open Star Stats from Home or a child's expanded Kids profile.
+Choose a child, Week or Month, and previous/next period. Week starts on Monday;
+daily bars use the viewing device's local calendar/timezone. Monthly charts scroll
+horizontally on smaller screens. Earned totals exclude balance resets.
+
+Reset Stars is available in the expanded Kids profile and Star Stats. Confirmation
+clears only the selected child's current balance, retaining earning history. The
+database records who reset it. Tutors and anonymous child sessions cannot reset,
+edit balances directly, or read the family-wide award ledger.
+
+Task approval credits rewards atomically, exactly once per assignment. Repeated
+approval, retakes, or decline/reapproval of that same assignment do not duplicate
+its reward. New assignments earn new rewards. History retains its title/amount
+snapshot after mission/assignment cleanup, but deleting a child deletes that
+child's history along with the profile.
+
+The migration preserves existing balances and backfills retained approved tasks
+using their saved approval times and currently stored rewards. Deleted approvals,
+previous resets, and original reward values that were later edited cannot be
+recovered, so historical bars may not explain the entire pre-migration balance.
+All new rewards and resets are tracked. Install the updated family APK after
+running this migration: older APKs attempt a direct balance update which is now blocked.
 
 ## Manual Subscription Setup
 

@@ -1,0 +1,26 @@
+.star-stats-page { max-width:900px; margin:auto; }
+.star-stats-page h1 { font-size:26px; }
+.star-stats-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; margin:20px 0; }
+.star-stats-toolbar .field { flex:1; min-width:180px; max-width:360px; margin:0; }
+.star-period-control { display:flex; gap:4px; padding:4px; border:1px solid #dce9ff; border-radius:8px; }
+.star-period-control .btn { border-radius:6px; min-width:72px; }
+.star-period-nav { display:grid; grid-template-columns:44px minmax(0,1fr) 44px; align-items:center; gap:12px; }
+.star-period-nav h2 { text-align:center; font-size:18px; margin:0; overflow-wrap:anywhere; }
+.star-period-arrow { padding:0; height:44px; font-size:32px; line-height:1; border-radius:6px; }
+.star-summary { display:flex; flex-wrap:wrap; gap:40px; padding:24px 0; }
+.star-summary span { color:var(--muted); display:block; }
+.star-summary strong { display:block; font-size:30px; color:var(--primary); }
+.star-chart { margin:0; padding:20px 0; border-top:1px solid #dce9ff; border-bottom:1px solid #dce9ff; }
+.star-chart figcaption { font-weight:700; margin-bottom:16px; }
+.star-chart-scroll { max-width:100%; overflow-x:auto; padding-bottom:8px; }
+.star-bars { list-style:none; display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); align-items:end; gap:12px; padding:0; margin:0; min-width:290px; }
+.star-bars-month { display:flex; gap:4px; min-width:0; }
+.star-bars-month li { flex:1 0 22px; }
+.star-bars li { display:grid; grid-template-rows:26px 180px 24px; min-width:0; text-align:center; font-size:13px; }
+.star-bars li>strong { align-self:center; font-size:13px; }
+.star-bars small { padding-top:6px; color:var(--muted); white-space:nowrap; }
+.star-bar-track { position:relative; border-bottom:1px solid #bccce0; }
+.star-bar { display:block; position:absolute; bottom:0; width:70%; left:15%; min-height:2px; background:#078ab0; border-radius:4px 4px 0 0; }
+.star-bar-zero { background:#dce9ff; }
+.star-bars li:nth-child(3n+2) .star-bar:not(.star-bar-zero) { background:#14a477; }
+.star-bars li:nth-child(3n) .star-bar:not(.star-bar-zero) { background:#e7a020; }

@@ -4,8 +4,8 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="MissionNest"
+        android:icon="@drawable/mykidstask_icon"
+        android:label="MyKidsTask"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
         <activity

@@ -1,0 +1,15 @@
+.quiz-rich-text { display:inline-block; vertical-align:middle; white-space:pre-wrap; overflow-wrap:anywhere; max-width:100%; overflow-x:auto; overflow-y:hidden; }
+.card:has(.quiz-rich-text) { min-width:0; }
+.card h1:has(.quiz-rich-text) { font-size:22px; line-height:1.5; }
+.fill-quiz-row > label { display:flex; align-items:flex-start; gap:6px; }
+.fill-quiz-row > label > .quiz-rich-text { min-width:0; }
+.quiz-question-number { flex:none; }
+.quiz-rich-text .katex { white-space:normal; font-size:1.1em; }
+.quiz-rich-text .katex-display { max-width:100%; overflow-x:auto; overflow-y:hidden; padding:8px 2px; margin:8px 0; }
+.quiz-rich-text .katex-html { white-space:nowrap; }
+.equation-editor { margin:14px 0; border-top:1px solid #dce9ff; border-bottom:1px solid #dce9ff; }
+.equation-editor summary { cursor:pointer; padding:14px 0; font-weight:700; }
+.equation-controls { padding:0 0 14px; }
+.equation-controls textarea { min-height:72px; font-family:Consolas,monospace; }
+.equation-preview { min-height:64px; padding:12px; margin-bottom:12px; background:white; border:1px solid #dce9ff; border-radius:6px; overflow:auto; }
+.answer .quiz-rich-text { text-align:left; }
